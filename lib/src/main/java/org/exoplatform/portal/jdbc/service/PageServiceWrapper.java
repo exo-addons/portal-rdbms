@@ -9,6 +9,7 @@ import org.exoplatform.commons.api.persistence.DataInitializer;
 import org.exoplatform.portal.jdbc.dao.ContainerDAO;
 import org.exoplatform.portal.jdbc.dao.PageDAO;
 import org.exoplatform.portal.jdbc.dao.PermissionDAO;
+import org.exoplatform.portal.jdbc.dao.SiteDAO;
 import org.exoplatform.portal.jdbc.dao.WindowDAO;
 import org.exoplatform.portal.mop.EventType;
 import org.exoplatform.portal.mop.QueryResult;
@@ -36,8 +37,9 @@ public class PageServiceWrapper implements PageService {
                             ContainerDAO containerDAO,
                             WindowDAO windowDAO,
                             PermissionDAO permissionDAO,
+                            SiteDAO siteDAO,
                             DataInitializer initializer) {
-    this.service = new PageServiceImpl(pageDAO, containerDAO, windowDAO, permissionDAO);
+    this.service = new PageServiceImpl(pageDAO, containerDAO, windowDAO, permissionDAO, siteDAO);
     this.listenerService = listenerService;
   }
 

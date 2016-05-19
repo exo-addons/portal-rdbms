@@ -162,7 +162,7 @@ public class JDBCModelStorageImpl implements ModelDataStorage {
 
   @Override
   public void remove(PortalData config) throws Exception {
-    SiteKey siteKey = new SiteKey(config.getKey().getType().toUpperCase(), config.getKey().getId());
+    SiteKey siteKey = new SiteKey(config.getKey().getType(), config.getKey().getId());
     SiteEntity entity = siteDAO.findByKey(siteKey);
 
     if (entity != null) {

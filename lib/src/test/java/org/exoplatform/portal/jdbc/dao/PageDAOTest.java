@@ -1,13 +1,14 @@
 package org.exoplatform.portal.jdbc.dao;
 
 import org.gatein.api.page.PageQuery;
-import org.gatein.api.site.SiteType;
 
 import org.exoplatform.component.test.AbstractKernelTest;
 import org.exoplatform.component.test.ConfigurationUnit;
 import org.exoplatform.component.test.ConfiguredBy;
 import org.exoplatform.component.test.ContainerScope;
 import org.exoplatform.portal.jdbc.entity.PageEntity;
+import org.exoplatform.portal.jdbc.entity.SiteEntity;
+import org.exoplatform.portal.mop.SiteType;
 import org.exoplatform.portal.mop.page.PageKey;
 
 @ConfiguredBy({
@@ -15,17 +16,20 @@ import org.exoplatform.portal.mop.page.PageKey;
 })
 public class PageDAOTest extends AbstractKernelTest {
   private PageDAO pageDAO;
+  private SiteDAO siteDAO;
   
   @Override
   protected void setUp() throws Exception {    
     begin();
     super.setUp();
     this.pageDAO = getService(PageDAO.class);
+    this.siteDAO = getService(SiteDAO.class);
   }
 
   @Override
   protected void tearDown() throws Exception {
     pageDAO.deleteAll();
+    siteDAO.deleteAll();
     super.tearDown();
     end();
   }
@@ -42,6 +46,7 @@ public class PageDAOTest extends AbstractKernelTest {
   }
   
   public void testFindByKey() {
+    
     PageEntity entity = createInstance("portal::b::c", "testPage", null);
     pageDAO.create(entity);
     end();
@@ -61,11 +66,11 @@ public class PageDAOTest extends AbstractKernelTest {
     begin();
         
     PageQuery.Builder query1 = new PageQuery.Builder();    
-    query1.withSiteType(SiteType.SITE).withSiteName("b").withDisplayName("ef");
+    query1.withSiteType(org.gatein.api.site.SiteType.SITE).withSiteName("b").withDisplayName("ef");
     assertEquals(2, pageDAO.findByQuery(query1.build()).getSize());
     
     PageQuery.Builder query2 = new PageQuery.Builder();
-    query2.withSiteType(SiteType.SITE).withSiteName("b").withDisplayName("hik");
+    query2.withSiteType(org.gatein.api.site.SiteType.SITE).withSiteName("b").withDisplayName("hik");
     assertEquals(1, pageDAO.findByQuery(query2.build()).getSize());
   }
 
@@ -76,8 +81,7 @@ public class PageDAOTest extends AbstractKernelTest {
   private PageEntity createInstance(String key, String displayName, String description) {
     PageEntity entity = new PageEntity();
     PageKey pageKey = PageKey.parse(key);
-    entity.setOwnerType(pageKey.getSite().getType());
-    entity.setOwnerId(pageKey.getSite().getName());
+    entity.setOwner(getOrCreateSite(pageKey.getSite().getName()));
     entity.setName(pageKey.getName());
     entity.setDisplayName(displayName);
     entity.setDescription(description);
@@ -97,5 +101,16 @@ public class PageDAOTest extends AbstractKernelTest {
     assertEquals(entity.getName(), result.getName());
     assertEquals(entity.getFactoryId(), result.getFactoryId());
     assertEquals(entity.getPageBody(), result.getPageBody());
+  }
+  
+  private SiteEntity getOrCreateSite(String name) {
+    SiteEntity siteEntity = siteDAO.findByKey(SiteType.PORTAL.key(name));
+    if (siteEntity == null) {
+      siteEntity = new SiteEntity();
+      siteEntity.setSiteType(SiteType.PORTAL);
+      siteEntity.setName(name);
+      siteDAO.create(siteEntity);
+    }
+    return siteEntity;
   }
 }

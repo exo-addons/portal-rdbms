@@ -24,6 +24,9 @@ import java.util.List;
 
 import javax.persistence.Column;
 import javax.persistence.Entity;
+import javax.persistence.FetchType;
+import javax.persistence.JoinColumn;
+import javax.persistence.ManyToOne;
 import javax.persistence.NamedQueries;
 import javax.persistence.NamedQuery;
 import javax.persistence.Table;
@@ -39,56 +42,63 @@ import org.exoplatform.portal.mop.SiteType;
 @ExoEntity
 @Table(name = "PORTAL_PAGES")
 @NamedQueries({
-    @NamedQuery(name = "PageEntity.findByKey", query = "SELECT p FROM PageEntity p WHERE p.ownerType = :ownerType AND p.ownerId = :ownerId AND p.name = :name") })
+    @NamedQuery(name = "PageEntity.deleteByOwner", query = "DELETE PageEntity p WHERE p.id IN (select page.id FROM PageEntity page JOIN page.owner s WHERE s.siteType = :ownerType AND s.name = :ownerId)"),
+    @NamedQuery(name = "PageEntity.findByKey", query = "SELECT p FROM PageEntity p JOIN p.owner s WHERE s.siteType = :ownerType AND s.name = :ownerId AND p.name = :name") })
 public class PageEntity extends ComponentEntity implements Serializable {
 
-  private static final long serialVersionUID = -6195451978995765259L;
+  private static final long     serialVersionUID = -6195451978995765259L;
 
-  @Column(name = "OWNER_TYPE")
-  private SiteType          ownerType;
-
-  @Column(name = "OWNER_ID", length = 200)
-  private String            ownerId;
+  @ManyToOne(fetch = FetchType.EAGER, optional = false)
+  @JoinColumn(name = "SITE_ID")
+  private SiteEntity            owner;
 
   @Column(name = "SHOW_MAX_WINDOW")
-  private boolean           showMaxWindow;
+  private boolean               showMaxWindow;
 
   @Column(name = "DISPLAY_NAME", length = 200)
-  private String            displayName;
-  
+  private String                displayName;
+
   @Column(name = "NAME", length = 200)
   private String                name;
-  
+
   @Column(name = "DESCRIPTION", length = 2000)
   private String                description;
-  
+
   @Column(name = "FACTORY_ID", length = 200)
   private String                factoryId;
-  
+
   @Column(name = "PAGE_BODY", length = 5000)
-  private String            pageBody = new JSONArray().toJSONString();
-  
+  private String                pageBody         = new JSONArray().toJSONString();
+
   @Transient
   private List<ComponentEntity> children         = new LinkedList<ComponentEntity>();
-  
-  public SiteType getOwnerType() {
-    return ownerType;
+
+  public SiteEntity getOwner() {
+    return owner;
   }
 
-  public void setOwnerType(SiteType ownerType) {
-    this.ownerType = ownerType;
-  }
-
-  public String getOwnerId() {
-    return ownerId;
-  }
-
-  public void setOwnerId(String ownerId) {
-    this.ownerId = ownerId;
+  public void setOwner(SiteEntity owner) {
+    this.owner = owner;
   }
 
   public boolean isShowMaxWindow() {
     return showMaxWindow;
+  }
+
+  public SiteType getOwnerType() {
+    if (getOwner() != null) {
+      return getOwner().getSiteType();
+    } else {
+      return null;
+    }
+  }
+
+  public String getOwnerId() {
+    if (getOwner() != null) {
+      return getOwner().getName();
+    } else {
+      return null;
+    }
   }
 
   public void setShowMaxWindow(boolean showMaxWindow) {

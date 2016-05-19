@@ -30,7 +30,6 @@ import javax.persistence.Id;
 import javax.persistence.JoinColumn;
 import javax.persistence.ManyToOne;
 import javax.persistence.OneToMany;
-import javax.persistence.OneToOne;
 import javax.persistence.OrderBy;
 import javax.persistence.PreRemove;
 import javax.persistence.Table;
@@ -70,9 +69,8 @@ public class NodeEntity implements Serializable {
   @Column(name = "VISIBILITY")
   private Visibility        visibility       = Visibility.DISPLAYED;
 
-  @OneToOne()
-  @JoinColumn(name = "PAGE_ID")
-  private PageEntity        pageRef;
+  @Column(name = "PAGE_ID")
+  private String        pageRef;
 
   @Column(name = "INDEX")
   private int               index;
@@ -141,11 +139,11 @@ public class NodeEntity implements Serializable {
     this.visibility = visibility;
   }
 
-  public PageEntity getPageRef() {
+  public String getPageRef() {
     return pageRef;
   }
 
-  public void setPageRef(PageEntity pageRef) {
+  public void setPageRef(String pageRef) {
     this.pageRef = pageRef;
   }
 

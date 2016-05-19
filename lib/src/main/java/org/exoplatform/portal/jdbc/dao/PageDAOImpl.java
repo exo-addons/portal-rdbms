@@ -5,9 +5,11 @@ import java.util.List;
 
 import javax.persistence.EntityManager;
 import javax.persistence.NoResultException;
+import javax.persistence.Query;
 import javax.persistence.TypedQuery;
 import javax.persistence.criteria.CriteriaBuilder;
 import javax.persistence.criteria.CriteriaQuery;
+import javax.persistence.criteria.Join;
 import javax.persistence.criteria.Predicate;
 import javax.persistence.criteria.Root;
 
@@ -19,6 +21,8 @@ import org.exoplatform.commons.persistence.impl.EntityManagerHolder;
 import org.exoplatform.commons.utils.ListAccess;
 import org.exoplatform.portal.jdbc.entity.PageEntity;
 import org.exoplatform.portal.jdbc.entity.PageEntity_;
+import org.exoplatform.portal.jdbc.entity.SiteEntity;
+import org.exoplatform.portal.jdbc.entity.SiteEntity_;
 import org.exoplatform.portal.mop.SiteKey;
 import org.exoplatform.portal.mop.page.PageKey;
 
@@ -26,8 +30,7 @@ public class PageDAOImpl extends AbstractDAO<PageEntity> implements PageDAO {
 
   @Override
   public PageEntity findByKey(PageKey pageKey) {
-    TypedQuery<PageEntity> query = getEntityManager().createNamedQuery("PageEntity.findByKey",
-                                                                       PageEntity.class);
+    TypedQuery<PageEntity> query = getEntityManager().createNamedQuery("PageEntity.findByKey", PageEntity.class);
 
     SiteKey siteKey = pageKey.getSite();
     query.setParameter("ownerType", siteKey.getType());
@@ -38,6 +41,15 @@ public class PageDAOImpl extends AbstractDAO<PageEntity> implements PageDAO {
     } catch (NoResultException ex) {
       return null;
     }
+  }
+
+  @Override
+  public void deleteByOwner(org.exoplatform.portal.mop.SiteType siteType, String siteName) {
+    Query query = getEntityManager().createNamedQuery("PageEntity.deleteByOwner");
+
+    query.setParameter("ownerType", siteType);
+    query.setParameter("ownerId", siteName);
+    query.executeUpdate();
   }
 
   @Override
@@ -67,6 +79,8 @@ public class PageDAOImpl extends AbstractDAO<PageEntity> implements PageDAO {
     CriteriaBuilder cb = em.getCriteriaBuilder();
     CriteriaQuery<PageEntity> criteria = cb.createQuery(PageEntity.class);
     Root<PageEntity> pageEntity = criteria.from(PageEntity.class);
+    Join<PageEntity, SiteEntity> join = pageEntity.join(PageEntity_.owner);
+
     //
     CriteriaQuery<PageEntity> select = criteria.select(pageEntity);
     select.distinct(true);
@@ -74,11 +88,10 @@ public class PageDAOImpl extends AbstractDAO<PageEntity> implements PageDAO {
     List<Predicate> predicates = new LinkedList<Predicate>();
 
     if (query.getSiteType() != null) {
-      predicates.add(cb.equal(pageEntity.get(PageEntity_.ownerType),
-                              convertSiteType(query.getSiteType())));
+      predicates.add(cb.equal(join.get(SiteEntity_.siteType), convertSiteType(query.getSiteType())));
     }
     if (query.getSiteName() != null) {
-      predicates.add(cb.equal(pageEntity.get(PageEntity_.ownerId), query.getSiteName()));
+      predicates.add(cb.equal(join.get(SiteEntity_.name), query.getSiteName()));
     }
 
     if (query.getDisplayName() != null) {

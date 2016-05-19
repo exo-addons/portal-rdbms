@@ -42,9 +42,11 @@ public class NavigationDAOImpl extends GenericDAOJPAImpl<NavigationEntity, Strin
     }
 
     @Override
-    public NavigationEntity create(NavigationEntity entity) {
-        // TODO Auto-generated method stub
-        return super.create(entity);
+    public void deleteByOwner(SiteType siteType, String name) {
+      NavigationEntity entity = findByOwner(siteType, name);
+      if (entity != null) {
+        delete(entity);
+      }
     }
 
 }

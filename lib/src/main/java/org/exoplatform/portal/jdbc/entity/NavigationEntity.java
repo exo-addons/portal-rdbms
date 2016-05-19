@@ -24,6 +24,7 @@ import javax.persistence.Entity;
 import javax.persistence.FetchType;
 import javax.persistence.Id;
 import javax.persistence.JoinColumn;
+import javax.persistence.ManyToOne;
 import javax.persistence.NamedQueries;
 import javax.persistence.NamedQuery;
 import javax.persistence.OneToOne;
@@ -38,7 +39,7 @@ import org.exoplatform.portal.mop.SiteType;
 @ExoEntity
 @Table(name = "PORTAL_NAVIGATIONS")
 @NamedQueries({
-  @NamedQuery(name = "NavigationEntity.findByOwner", query = "SELECT nav FROM NavigationEntity nav WHERE nav.ownerType = :ownerType AND nav.ownerId = :ownerId") })
+  @NamedQuery(name = "NavigationEntity.findByOwner", query = "SELECT nav FROM NavigationEntity nav INNER JOIN nav.owner s WHERE s.siteType = :ownerType AND s.name = :ownerId") })
 public class NavigationEntity implements Serializable {
 
   private static final long serialVersionUID = 3811683620903785319L;
@@ -47,11 +48,9 @@ public class NavigationEntity implements Serializable {
   @Column(name = "NAVIGATION_ID", length = 200)
   private String             id;
 
-  @Column(name = "OWNER_TYPE")
-  private SiteType          ownerType;
-
-  @Column(name = "OWNER_ID", length = 200)
-  private String            ownerId;
+  @ManyToOne(fetch = FetchType.EAGER, optional = false)
+  @JoinColumn(name = "SITE_ID")
+  private SiteEntity owner;
 
   @Column(name = "PRIORITY")
   private int               priority = 1;
@@ -68,20 +67,28 @@ public class NavigationEntity implements Serializable {
     this.id = id;
   }
 
+  public SiteEntity getOwner() {
+    return owner;
+  }
+
+  public void setOwner(SiteEntity owner) {
+    this.owner = owner;
+  }
+  
   public SiteType getOwnerType() {
-    return ownerType;
+    if (getOwner() != null) {
+      return getOwner().getSiteType();
+    } else {
+      return null;
+    }
   }
-
-  public void setOwnerType(SiteType ownerType) {
-    this.ownerType = ownerType;
-  }
-
+  
   public String getOwnerId() {
-    return ownerId;
-  }
-
-  public void setOwnerId(String ownerId) {
-    this.ownerId = ownerId;
+    if (getOwner() != null) {
+      return getOwner().getName();
+    } else {
+      return null;
+    }
   }
 
   public int getPriority() {

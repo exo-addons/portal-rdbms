@@ -16,12 +16,14 @@ import org.exoplatform.commons.utils.ListAccess;
 import org.exoplatform.portal.jdbc.dao.ContainerDAO;
 import org.exoplatform.portal.jdbc.dao.PageDAO;
 import org.exoplatform.portal.jdbc.dao.PermissionDAO;
+import org.exoplatform.portal.jdbc.dao.SiteDAO;
 import org.exoplatform.portal.jdbc.dao.WindowDAO;
 import org.exoplatform.portal.jdbc.entity.ComponentEntity;
 import org.exoplatform.portal.jdbc.entity.ComponentEntity.TYPE;
 import org.exoplatform.portal.jdbc.entity.ContainerEntity;
 import org.exoplatform.portal.jdbc.entity.PageEntity;
 import org.exoplatform.portal.jdbc.entity.PermissionEntity;
+import org.exoplatform.portal.jdbc.entity.SiteEntity;
 import org.exoplatform.portal.jdbc.entity.WindowEntity;
 import org.exoplatform.portal.mop.QueryResult;
 import org.exoplatform.portal.mop.SiteKey;
@@ -39,6 +41,8 @@ public class PageServiceImpl implements PageService {
 
   private static Log    LOG = ExoLogger.getExoLogger(PageServiceImpl.class);
 
+  private SiteDAO       siteDAO;
+
   private PageDAO       pageDAO;
 
   private ContainerDAO  containerDAO;
@@ -55,7 +59,11 @@ public class PageServiceImpl implements PageService {
    * @param pageDAO the persistence
    * @throws NullPointerException if the persistence argument is null
    */
-  public PageServiceImpl(PageDAO pageDAO, ContainerDAO containerDAO, WindowDAO windowDAO, PermissionDAO permissionDAO)
+  public PageServiceImpl(PageDAO pageDAO,
+                         ContainerDAO containerDAO,
+                         WindowDAO windowDAO,
+                         PermissionDAO permissionDAO,
+                         SiteDAO siteDAO)
       throws NullPointerException {
     if (pageDAO == null) {
       throw new NullPointerException("No null persistence allowed");
@@ -64,6 +72,7 @@ public class PageServiceImpl implements PageService {
     this.windowDAO = windowDAO;
     this.containerDAO = containerDAO;
     this.permissionDAO = permissionDAO;
+    this.siteDAO = siteDAO;
   }
 
   @Override
@@ -192,29 +201,34 @@ public class PageServiceImpl implements PageService {
       throw new NullPointerException("No null destination accepted");
     }
 
-    // TODO check no source site
     PageEntity pageSrc = pageDAO.findByKey(src);
     if (pageSrc == null) {
       throw new PageServiceException(PageError.CLONE_NO_SRC_PAGE,
                                      "Could not clone non existing page " + src.getName() + " from site of type "
                                          + src.getSite().getType() + " with id " + src.getSite().getName());
     } else {
-      // TODO CHECK no destination site
       PageEntity pageDst = pageDAO.findByKey(dst);
       if (pageDst != null) {
         throw new PageServiceException(PageError.CLONE_DST_ALREADY_EXIST,
                                        "Could not clone page " + dst.getName() + "to existing page " + dst.getSite().getType()
                                            + " with id " + dst.getSite().getName());
       } else {
+        SiteKey siteKey = dst.getSite();
+        SiteEntity owner = siteDAO.findByKey(siteKey);
+        if (owner == null) {
+          throw new PageServiceException(PageError.CLONE_NO_DST_SITE,
+                                         "Could not clone page " + siteKey.getName() + "to non existing site of type "
+                                             + siteKey.getTypeName() + " with id " + siteKey.getName());
+        }
+
         pageDst = buildPageEntityContext(null, buildPageContext(pageSrc));
         List<ComponentEntity> children = clone(pageSrc.getPageBody());
         pageDst.setChildren(children);
         pageDst.setPageBody(((JSONArray) pageDst.toJSON().get("children")).toJSONString());
         //
-        SiteKey siteKey = dst.getSite();
-        pageDst.setOwnerId(siteKey.getName());
-        pageDst.setOwnerType(siteKey.getType());
+
         pageDst.setName(dst.getName());
+        pageDst.setOwner(owner);
 
         pageDAO.create(pageDst);
         clonePermissions(pageDst.getId(), pageSrc.getId());
@@ -247,7 +261,7 @@ public class PageServiceImpl implements PageService {
       return new QueryResult<PageContext>(from, 0, Collections.<PageContext> emptyList());
     }
   }
-  
+
   private List<ComponentEntity> clone(String pageBody) {
     List<ComponentEntity> results = new LinkedList<ComponentEntity>();
 
@@ -383,8 +397,7 @@ public class PageServiceImpl implements PageService {
     }
 
     SiteKey siteKey = page.getKey().getSite();
-    entity.setOwnerId(siteKey.getName());
-    entity.setOwnerType(siteKey.getType());
+    entity.setOwner(siteDAO.findByKey(siteKey));
     entity.setName(page.getKey().getName());
 
     return entity;
@@ -393,12 +406,15 @@ public class PageServiceImpl implements PageService {
   private PageContext buildPageContext(PageEntity entity) {
     List<PermissionEntity> access = permissionDAO.getPermissions(entity.getId(),
                                                                  org.exoplatform.portal.jdbc.entity.PermissionEntity.TYPE.ACCESS);
-    List<String> edit = buildPermission(permissionDAO.getPermissions(entity.getId(),
-                                                                     org.exoplatform.portal.jdbc.entity.PermissionEntity.TYPE.EDIT));
-    List<PermissionEntity> moveApps = permissionDAO.getPermissions(entity.getId(),
-                                                                   org.exoplatform.portal.jdbc.entity.PermissionEntity.TYPE.MOVE_APP);
-    List<PermissionEntity> moveConts = permissionDAO.getPermissions(entity.getId(),
-                                                                    org.exoplatform.portal.jdbc.entity.PermissionEntity.TYPE.MOVE_CONTAINER);
+    List<String> edit =
+                      buildPermission(permissionDAO.getPermissions(entity.getId(),
+                                                                   org.exoplatform.portal.jdbc.entity.PermissionEntity.TYPE.EDIT));
+    List<PermissionEntity> moveApps =
+                                    permissionDAO.getPermissions(entity.getId(),
+                                                                 org.exoplatform.portal.jdbc.entity.PermissionEntity.TYPE.MOVE_APP);
+    List<PermissionEntity> moveConts =
+                                     permissionDAO.getPermissions(entity.getId(),
+                                                                  org.exoplatform.portal.jdbc.entity.PermissionEntity.TYPE.MOVE_CONTAINER);
 
     PageState state = new PageState(entity.getDisplayName(),
                                     entity.getDescription(),
@@ -427,7 +443,7 @@ public class PageServiceImpl implements PageService {
 
     return results;
   }
-  
+
   private void savePagePermissions(String pageId, PageContext page) {
     PageState state = page.getState();
     if (state != null) {

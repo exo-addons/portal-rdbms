@@ -13,11 +13,13 @@ import org.exoplatform.component.test.ConfiguredBy;
 import org.exoplatform.component.test.ContainerScope;
 import org.exoplatform.portal.jdbc.dao.ContainerDAO;
 import org.exoplatform.portal.jdbc.dao.PageDAO;
+import org.exoplatform.portal.jdbc.dao.SiteDAO;
 import org.exoplatform.portal.jdbc.dao.WindowDAO;
 import org.exoplatform.portal.jdbc.entity.ComponentEntity;
 import org.exoplatform.portal.jdbc.entity.ComponentEntity.TYPE;
 import org.exoplatform.portal.jdbc.entity.ContainerEntity;
 import org.exoplatform.portal.jdbc.entity.PageEntity;
+import org.exoplatform.portal.jdbc.entity.SiteEntity;
 import org.exoplatform.portal.jdbc.entity.WindowEntity;
 import org.exoplatform.portal.mop.QueryResult;
 import org.exoplatform.portal.mop.SiteKey;
@@ -30,6 +32,8 @@ import org.exoplatform.portal.mop.page.PageService;
 })
 public class TestPageService extends AbstractKernelTest {
   private PageService pageService;
+  
+  private SiteDAO siteDAO;
   
   private PageDAO pageDAO;
   
@@ -45,6 +49,7 @@ public class TestPageService extends AbstractKernelTest {
     this.pageDAO = getContainer().getComponentInstanceOfType(PageDAO.class);
     this.containerDAO = getContainer().getComponentInstanceOfType(ContainerDAO.class);
     this.windowDAO = getContainer().getComponentInstanceOfType(WindowDAO.class);
+    this.siteDAO = getContainer().getComponentInstanceOfType(SiteDAO.class);
   }
 
   @Override
@@ -55,6 +60,7 @@ public class TestPageService extends AbstractKernelTest {
       PageContext page = iter.next();
       pageService.destroyPage(page.getKey());
     }
+    siteDAO.deleteAll();
     super.tearDown();
     end();
   }
@@ -69,6 +75,9 @@ public class TestPageService extends AbstractKernelTest {
     container.setChildren(Arrays.<ComponentEntity>asList(app2));
     containerDAO.create(container);
     
+    getOrCreateSite(SiteKey.portal("srcPortal"));
+    getOrCreateSite(SiteKey.portal("targetPortal"));
+    
     PageKey srcKey = new PageKey(SiteKey.portal("srcPortal"), "srcName");
     PageEntity src = createPage(srcKey);
     src.setChildren(Arrays.asList(container, app1));
@@ -77,7 +86,7 @@ public class TestPageService extends AbstractKernelTest {
     pageDAO.create(src);
     end();
     begin();
-
+    
     PageKey dstKey = new PageKey(SiteKey.portal("targetPortal"), "targetName");
     pageService.clone(srcKey, dstKey);
     
@@ -106,8 +115,18 @@ public class TestPageService extends AbstractKernelTest {
   private PageEntity createPage(PageKey srcKey) {
     PageEntity page = new PageEntity();
     page.setName(srcKey.getName());
-    page.setOwnerId(srcKey.getSite().getName());
-    page.setOwnerType(srcKey.getSite().getType());
+    page.setOwner(getOrCreateSite(srcKey.getSite()));
     return page;
+  }
+  
+  private SiteEntity getOrCreateSite(SiteKey siteKey) {
+    SiteEntity siteEntity = siteDAO.findByKey(siteKey);
+    if (siteEntity == null) {
+      siteEntity = new SiteEntity();
+      siteEntity.setSiteType(siteKey.getType());
+      siteEntity.setName(siteKey.getName());
+      siteDAO.create(siteEntity);
+    }
+    return siteEntity;
   }
 }

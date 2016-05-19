@@ -15,8 +15,7 @@
         <constraints nullable="false" primaryKey="true"
           primaryKeyName="PK_PORTAL_PAGES" />
       </column>
-      <column name="OWNER_TYPE" type="INT"/>
-      <column name="OWNER_ID" type="NVARCHAR(200)"/>
+      <column name="SITE_ID" type="VARCHAR(200)"/>
       <column name="SHOW_MAX_WINDOW" type="BIT" />
       <column name="DISPLAY_NAME" type="NVARCHAR(200)"/>
       <column name="NAME" type="NVARCHAR(200)"/>
@@ -110,8 +109,7 @@
         <constraints nullable="false" primaryKey="true"
           primaryKeyName="PK_PORTAL_NAVIGATIONS" />
       </column>
-      <column name="OWNER_TYPE" type="INT"/>
-      <column name="OWNER_ID" type="NVARCHAR(200)"/>
+      <column name="SITE_ID" type="VARCHAR(200)"/>
       <column name="PRIORITY" type="INT"/>
       <column name="NODE_ID" type="VARCHAR(200)">
         <constraints foreignKeyName="FK_PORTAL_NAV_NODE" references="PORTAL_NODES(NODE_ID)" nullable="false"/>

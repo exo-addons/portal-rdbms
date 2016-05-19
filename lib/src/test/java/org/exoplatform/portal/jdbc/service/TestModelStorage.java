@@ -59,18 +59,6 @@ public class TestModelStorage extends TestDataStorage {
     RequestLifeCycle.end();
   }
 
-  public void testCreatePortal() throws Exception {
-
-  }
-
-  public void testPortalConfigSave() throws Exception {
-
-  }
-
-  public void testPortalConfigRemove() throws Exception {
-
-  }
-
   public void testWindowMove1() {
 
   }
@@ -134,6 +122,11 @@ public class TestModelStorage extends TestDataStorage {
     // ((Application)container.getChildren().get(1)).getInstanceState());
     assertEquals(app3Id, container.getChildren().get(1).getStorageId());
   }
+  
+  @Override
+  public void testPortalConfigRemove() throws Exception {
+
+  }
 
   public void testGetAllPortalNames() throws Exception {
 
@@ -177,13 +170,13 @@ public class TestModelStorage extends TestDataStorage {
 
   public void testGettingGadgetInDashboard() throws Exception {
     Page page = new Page();
-    page.setPageId("user::john::foo");
+    page.setPageId("portal::test::foo");
     Application<Portlet> app = Application.createPortletApplication();
     app.setState(new TransientApplicationState<Portlet>("dashboard/DashboardPortlet"));
     page.getChildren().add(app);
     pageService.savePage(new PageContext(page.getPageKey(), null));
     storage_.save(page);
-    page = storage_.getPage("user::john::foo");
+    page = storage_.getPage("portal::test::foo");
     String id = page.getChildren().get(0).getStorageId();
 
     // Load the dashboard itself
