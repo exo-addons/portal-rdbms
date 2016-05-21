@@ -16,13 +16,17 @@ import org.exoplatform.portal.config.model.Container;
 import org.exoplatform.portal.config.model.Dashboard;
 import org.exoplatform.portal.config.model.Page;
 import org.exoplatform.portal.config.model.PersistentApplicationState;
+import org.exoplatform.portal.config.model.PortalConfig;
 import org.exoplatform.portal.config.model.TransientApplicationState;
 import org.exoplatform.portal.mop.page.PageContext;
 import org.exoplatform.portal.mop.page.PageService;
 import org.exoplatform.portal.pom.spi.gadget.Gadget;
 import org.exoplatform.portal.pom.spi.portlet.Portlet;
+import org.exoplatform.services.organization.Group;
+import org.exoplatform.services.organization.GroupHandler;
 
-@ConfiguredBy({ @ConfigurationUnit(scope = ContainerScope.PORTAL, path = "conf/exo.portal.component.test.jcr-configuration.xml"),
+@ConfiguredBy({
+    @ConfigurationUnit(scope = ContainerScope.PORTAL, path = "conf/exo.portal.component.test.jcr-configuration.xml"),
     @ConfigurationUnit(scope = ContainerScope.PORTAL, path = "conf/exo.portal.component.identity-configuration.xml"),
     @ConfigurationUnit(scope = ContainerScope.PORTAL, path = "conf/standalone/portal-configuration.xml"),
 
@@ -33,8 +37,6 @@ public class TestModelStorage extends TestDataStorage {
   private PageService pageService;
 
   private DataStorage storage_;
-  
-  private EntityTransaction transaction;
 
   public TestModelStorage(String name) {
     super(name);
@@ -45,18 +47,33 @@ public class TestModelStorage extends TestDataStorage {
     super.setUp();
     this.pageService = getContainer().getComponentInstanceOfType(PageService.class);
     storage_ = (DataStorage) getContainer().getComponentInstanceOfType(DataStorage.class);
-    
-    EntityManagerService managerService = getContainer().getComponentInstanceOfType(EntityManagerService.class);
-    transaction = managerService.getEntityManager().getTransaction();
-    transaction.begin();
   }
 
   @Override
-  protected void tearDown() throws Exception {
+  protected void end(boolean save) {
+    EntityManagerService managerService =
+                                        getContainer().getComponentInstanceOfType(EntityManagerService.class);
+    EntityTransaction transaction = managerService.getEntityManager().getTransaction();
     if (transaction.isActive()) {
-      transaction.rollback();
+      if (save) {
+        transaction.commit();
+      } else {
+        transaction.rollback();
+      }
     }
-    RequestLifeCycle.end();
+    super.end(save);
+  }
+
+  @Override
+  protected void begin() {
+    super.begin();
+
+    EntityManagerService managerService =
+                                        getContainer().getComponentInstanceOfType(EntityManagerService.class);
+    EntityTransaction transaction = managerService.getEntityManager().getTransaction();
+    if (!transaction.isActive()) {
+      transaction.begin();
+    }
   }
 
   public void testWindowMove1() {
@@ -122,41 +139,12 @@ public class TestModelStorage extends TestDataStorage {
     // ((Application)container.getChildren().get(1)).getInstanceState());
     assertEquals(app3Id, container.getChildren().get(1).getStorageId());
   }
-  
-  @Override
-  public void testPortalConfigRemove() throws Exception {
-
-  }
-
-  public void testGetAllPortalNames() throws Exception {
-
-  }
-
-  public void testGetAllGroupNames() throws Exception {
-
-  }
 
   public void testAccessMixin() throws Exception {
 
   }
 
   public void testModifyMixin() throws Exception {
-
-  }
-
-  public void testSiteLayout() throws Exception {
-
-  }
-
-  public void testGroupLayout() throws Exception {
-
-  }
-
-  public void testGroupNavigation() throws Exception {
-
-  }
-
-  public void testUserLayout() throws Exception {
 
   }
 
@@ -203,8 +191,42 @@ public class TestModelStorage extends TestDataStorage {
     assertEquals(gadget.getId(), applicationModel.getId());
   }
 
-  //We need to investigate why when the pref is null we need to replace it with empty string
-  //in chromattic, it's done by org.exoplatform.portal.pom.spi.portlet.PortletState
+  public void testSiteLayout() throws Exception {
+    PortalConfig pConfig = storage_.getPortalConfig(PortalConfig.PORTAL_TYPE, "classic");
+    assertNotNull(pConfig);
+    assertNotNull("The Group layout of " + pConfig.getName() + " is null",
+                  pConfig.getPortalLayout());
+
+    pConfig = storage_.getPortalConfig(PortalConfig.GROUP_TYPE, "/platform/administrators");
+    assertNotNull(pConfig);
+    assertNotNull("The Group layout of " + pConfig.getName() + " is null",
+                  pConfig.getPortalLayout());
+    assertTrue(pConfig.getPortalLayout().getChildren() != null
+        && pConfig.getPortalLayout().getChildren().size() > 1);
+    pConfig.getPortalLayout().getChildren().clear();
+    storage_.save(pConfig);
+
+    pConfig = storage_.getPortalConfig(PortalConfig.GROUP_TYPE, "/platform/administrators");
+    assertNotNull(pConfig);
+    assertNotNull("The Group layout of " + pConfig.getName() + " is null",
+                  pConfig.getPortalLayout());
+    assertTrue(pConfig.getPortalLayout().getChildren() != null
+        && pConfig.getPortalLayout().getChildren().size() == 0);
+  }
+
+  public void testGroupLayout() throws Exception {
+  }
+  
+  public void testUserLayout() throws Exception {
+  }
+  
+  public void testGroupNavigation() throws Exception {    
+  }
+  
+  // We need to investigate why when the pref is null we need to replace it with
+  // empty string
+  // in chromattic, it's done by
+  // org.exoplatform.portal.pom.spi.portlet.PortletState
   public void testNullPreferenceValue() throws Exception {
     Page page = storage_.getPage("portal::test::test4");
     Application<Portlet> app = (Application<Portlet>) page.getChildren().get(0);
@@ -219,7 +241,7 @@ public class TestModelStorage extends TestDataStorage {
 
     //
     prefs = storage_.load(state, ApplicationType.PORTLET);
-    assertNotNull(prefs);    
-//    assertEquals(new PortletBuilder().add("template", "").build(), prefs);
+    assertNotNull(prefs);
+    // assertEquals(new PortletBuilder().add("template", "").build(), prefs);
   }
 }

@@ -36,7 +36,7 @@ import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 import org.json.simple.parser.JSONParser;
 import org.json.simple.parser.ParseException;
-
+import org.exoplatform.commons.api.persistence.ExoTransactional;
 import org.exoplatform.commons.utils.LazyPageList;
 import org.exoplatform.commons.utils.ListAccess;
 import org.exoplatform.portal.application.PortletPreferences;
@@ -160,6 +160,7 @@ public class JDBCModelStorageImpl implements ModelDataStorage {
     }
   }
 
+  @ExoTransactional
   @Override
   public void remove(PortalData config) throws Exception {
     SiteKey siteKey = new SiteKey(config.getKey().getType(), config.getKey().getId());
@@ -172,6 +173,8 @@ public class JDBCModelStorageImpl implements ModelDataStorage {
 
       permissionDAO.deletePermissions(entity.getId());
       siteDAO.delete(entity);
+    } else {
+      throw new NoSuchDataException("Could not remove non existing portal " + siteKey);
     }
   }
 
