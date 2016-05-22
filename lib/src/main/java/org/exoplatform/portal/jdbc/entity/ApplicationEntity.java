@@ -43,32 +43,32 @@ public class ApplicationEntity implements Serializable {
 
   @Id
   @Column(name = "ID", length = 200)
-  private String         id;
+  private String            id;
 
   @Column(name = "DISPLAY_NAME", length = 200)
-  private String         displayName;
+  private String            displayName;
 
   @Column(name = "DESCRIPTION", length = 2000)
-  private String         description;
+  private String            description;
 
   @Column(name = "CREATED_DATE")
-  private long           createdDate;
+  private long              createdDate;
 
   @Column(name = "MODIFIED_DATE")
-  private long           modifiedDate;
+  private long              modifiedDate;
 
   @Column(name = "APP_NAME", length = 200)
-  private String         applicationName;
+  private String            applicationName;
 
   @Column(name = "TYPE", length = 50)
-  private String         type;
+  private String            type;
 
   @Column(name = "CONTENT_ID", length = 200)
-  private String         contentId;
+  private String            contentId;
 
   @ManyToOne(fetch = FetchType.LAZY)
   @JoinColumn(name = "CATEGORY_ID")
-  private CategoryEntity category;
+  private CategoryEntity    category;
 
   public String getId() {
     return id;

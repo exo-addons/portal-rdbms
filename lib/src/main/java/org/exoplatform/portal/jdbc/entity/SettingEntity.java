@@ -17,8 +17,7 @@ import org.exoplatform.commons.api.persistence.ExoEntity;
 @Entity
 @ExoEntity
 @Table(name = "PORTAL_SETTINGS")
-@NamedQueries({
-  @NamedQuery(name = "SettingEntity.findByName", query = "SELECT s FROM SettingEntity s WHERE s.name = :name") })
+@NamedQueries({ @NamedQuery(name = "SettingEntity.findByName", query = "SELECT s FROM SettingEntity s WHERE s.name = :name") })
 public class SettingEntity implements Serializable {
 
   private static final long serialVersionUID = -44730129666361277L;
@@ -36,10 +35,10 @@ public class SettingEntity implements Serializable {
   private String            value;
 
   @Column(name = "CREATED_DATE")
-  private long              createdDate = System.currentTimeMillis();
+  private long              createdDate      = System.currentTimeMillis();
 
   @Column(name = "MODIFIED_DATE")
-  private long              modifiedDate = System.currentTimeMillis();
+  private long              modifiedDate     = System.currentTimeMillis();
 
   public Long getId() {
     return id;

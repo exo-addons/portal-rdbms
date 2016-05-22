@@ -93,21 +93,21 @@ public class JDBCModelStorageImpl implements ModelDataStorage {
 
   private static final String IMPORTED_STATUS = Status.class.getName();
 
-  private SiteDAO        siteDAO;
+  private SiteDAO             siteDAO;
 
-  private PageDAO        pageDAO;
+  private PageDAO             pageDAO;
 
-  private WindowDAO      windowDAO;
+  private WindowDAO           windowDAO;
 
-  private ContainerDAO   containerDAO;
+  private ContainerDAO        containerDAO;
 
-  private PermissionDAO  permissionDAO;
+  private PermissionDAO       permissionDAO;
 
-  private SettingDAO     settingDAO;
+  private SettingDAO          settingDAO;
 
-  private POMDataStorage delegate;
+  private POMDataStorage      delegate;
 
-  private static Log     log = ExoLogger.getExoLogger(JDBCModelStorageImpl.class);
+  private static Log          log             = ExoLogger.getExoLogger(JDBCModelStorageImpl.class);
 
   public JDBCModelStorageImpl(SiteDAO siteDAO,
                               PageDAO pageDAO,
@@ -464,7 +464,7 @@ public class JDBCModelStorageImpl implements ModelDataStorage {
     }
     setting.setModifiedDate(System.currentTimeMillis());
     setting.setValue(String.valueOf(status.status()));
-    
+
     if (setting.getId() == null) {
       settingDAO.create(setting);
     } else {
