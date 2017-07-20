@@ -441,7 +441,7 @@ public class JDBCModelStorageImpl implements ModelDataStorage {
     throw new UnsupportedOperationException();
   }
 
-  @Override
+//  @Override
   public Status getImportStatus() {
     SettingEntity setting = settingDAO.findByName(IMPORTED_STATUS);
     if (setting != null) {
@@ -455,7 +455,7 @@ public class JDBCModelStorageImpl implements ModelDataStorage {
     return null;
   }
 
-  @Override
+//  @Override
   public void saveImportStatus(Status status) {
     SettingEntity setting = settingDAO.findByName(IMPORTED_STATUS);
     if (setting == null) {

@@ -44,7 +44,7 @@
     <url>https://github.com/exo-addons/portal-rdbms</url>
   </scm>
   <properties>
-    <platform.version>4.4.x-portal-rdbms-SNAPSHOT</platform.version>
+    <platform.version>5.0.x-SNAPSHOT</platform.version>
   </properties>
   <dependencyManagement>
     <dependencies>
