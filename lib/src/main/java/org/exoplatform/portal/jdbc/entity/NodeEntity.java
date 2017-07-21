@@ -72,7 +72,7 @@ public class NodeEntity implements Serializable {
   @Column(name = "PAGE_ID")
   private String        pageRef;
 
-  @Column(name = "INDEX")
+  @Column(name = "NODE_INDEX")
   private int               index;
 
   @OneToMany(cascade = CascadeType.ALL, fetch = FetchType.LAZY, mappedBy = "parent", orphanRemoval = true)

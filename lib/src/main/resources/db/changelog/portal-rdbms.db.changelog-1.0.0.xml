@@ -88,7 +88,7 @@
       <column name="START_TIME" type="BIGINT"/>
       <column name="END_TIME" type="BIGINT"/>
       <column name="VISIBILITY" type="INT"/>
-      <column name="INDEX" type="INT"/>
+      <column name="NODE_INDEX" type="INT"/>
       
       <column name="PAGE_ID" type="VARCHAR(200)">
         <constraints foreignKeyName="FK_PORTAL_NODE_PAGE" references="PORTAL_PAGES(ID)"/>
